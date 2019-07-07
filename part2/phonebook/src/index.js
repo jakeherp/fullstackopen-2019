@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import ReactDOM from "react-dom"
-import axios from "axios"
+import personsService from "./services/persons"
 
 import Filter from "./components/Filter"
 import PersonForm from "./components/PersonForm"
@@ -13,11 +13,9 @@ const App = () => {
 	const [filterName, setFilterName] = useState("")
 
 	useEffect(() => {
-		const fetchPersons = async () => {
-			const data = await axios.get("http://localhost:3001/persons")
-			setPersons(data.data)
-		}
-		fetchPersons()
+		personsService.getPersons().then(res => {
+			setPersons(res.data)
+		})
 	}, [])
 
 	const handleNameChange = e => setNewName(e.target.value)
@@ -42,11 +40,41 @@ const App = () => {
 		const res = contacts.find(person => person.name === newName)
 
 		if (res) {
-			return alert(`${newName} is already added to phonebook`)
+			const confirm = window.confirm(
+				`${newName} is already added to phonebook, replace the old number with a new one?`,
+			)
+			confirm &&
+				personsService
+					.updatePerson(res.id, { ...res, number: newNumber })
+					.then(updatedPerson => {
+						let updatedPersons = persons.filter(
+							person => person.id !== updatedPerson.id,
+						)
+						console.log(updatedPersons)
+						updatedPersons = [...updatedPersons, updatedPerson]
+						console.log(updatedPersons)
+						setPersons(updatedPersons)
+						resetForm()
+					})
 		} else if (newName && newNumber) {
-			setPersons([...persons, { name: newName, number: newNumber }])
+			personsService
+				.createPerson({
+					name: newName,
+					number: newNumber,
+					id: persons.length + 1,
+				})
+				.then(res => {
+					setPersons([...persons, res.data])
+				})
 			resetForm()
 		}
+	}
+
+	const removePerson = id => {
+		personsService.removePerson(id).then(() => {
+			const updatedPersons = persons.filter(person => person.id !== id)
+			setPersons(updatedPersons)
+		})
 	}
 
 	return (
@@ -63,7 +91,7 @@ const App = () => {
 				}}
 			/>
 			<h2>Numbers</h2>
-			<Persons persons={filteredContacts} />
+			<Persons persons={filteredContacts} removePerson={removePerson} />
 		</div>
 	)
 }
