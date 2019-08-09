@@ -3,14 +3,18 @@ import ReactDOM from "react-dom"
 import personsService from "./services/persons"
 
 import Filter from "./components/Filter"
+import Notification from "./components/Notification"
 import PersonForm from "./components/PersonForm"
 import Persons from "./components/Persons"
+
+import "./styles/index.css"
 
 const App = () => {
 	const [persons, setPersons] = useState([])
 	const [newName, setNewName] = useState("")
 	const [newNumber, setNewNumber] = useState("")
 	const [filterName, setFilterName] = useState("")
+	const [notification, setNotification] = useState({})
 
 	useEffect(() => {
 		personsService.getPersons().then(res => {
@@ -55,6 +59,13 @@ const App = () => {
 						console.log(updatedPersons)
 						setPersons(updatedPersons)
 						resetForm()
+						setNotification({
+							message: `Person was updated!`,
+							type: `success`,
+						})
+						setTimeout(() => {
+							setNotification({})
+						}, 5000)
 					})
 		} else if (newName && newNumber) {
 			personsService
@@ -65,21 +76,54 @@ const App = () => {
 				})
 				.then(res => {
 					setPersons([...persons, res.data])
+					setNotification({
+						message: `Person was added`,
+						type: `success`,
+					})
+					setTimeout(() => {
+						setNotification({})
+					}, 5000)
 				})
 			resetForm()
 		}
 	}
 
 	const removePerson = id => {
-		personsService.removePerson(id).then(() => {
-			const updatedPersons = persons.filter(person => person.id !== id)
-			setPersons(updatedPersons)
-		})
+		personsService
+			.removePerson(id)
+			.then(() => {
+				const updatedPersons = persons.filter(
+					person => person.id !== id,
+				)
+				setPersons(updatedPersons)
+				setNotification({
+					message: `Person was removed`,
+					type: `success`,
+				})
+				setTimeout(() => {
+					setNotification({})
+				}, 5000)
+			})
+			.catch(err => {
+				setNotification({
+					message: `Person was already removed from the server`,
+					type: `error`,
+				})
+				setTimeout(() => {
+					setNotification({})
+				}, 5000)
+			})
 	}
 
 	return (
 		<div>
 			<h1>Phonebook</h1>
+			{notification && (
+				<Notification
+					message={notification.message}
+					type={notification.type}
+				/>
+			)}
 			<Filter value={{ filterName }} handler={{ handleFilter }} />
 			<h2>Add a new contact</h2>
 			<PersonForm

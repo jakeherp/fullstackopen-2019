@@ -1,0 +1,17 @@
+.error {
+	color: crimson;
+	background: lightcoral;
+	border: 1px solid crimson;
+	border-radius: 5px;
+	padding: 1rem;
+	margin-bottom: 3rem;
+}
+
+.success {
+	color: darkgreen;
+	background: darkseagreen;
+	border: 1px solid darkgreen;
+	border-radius: 5px;
+	padding: 1rem;
+	margin-bottom: 3rem;
+}
